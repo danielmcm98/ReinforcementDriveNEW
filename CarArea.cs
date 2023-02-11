@@ -1,6 +1,8 @@
 using Cinemachine;
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using UnityEngine;
 
 namespace Car //So no naming conflicts
@@ -22,7 +24,7 @@ namespace Car //So no naming conflicts
         [Tooltip("Enable training using true")]
         public bool trainingMode;
 
-        public List<CarAgent> carAgents { get; private set; } //Anything public can access but can only be set inside of class
+        public List<CarAgent> CarAgents { get; private set; } //Anything public can access but can only be set inside of class
 
         public List<GameObject> Checkpoints { get; private set; }
 
@@ -30,6 +32,15 @@ namespace Car //So no naming conflicts
         private void Awake()
         {
             //Find all aircraft Agents in area.
+            CarAgents = transform.GetComponentsInChildren<CarAgent>().ToList(); //Returns list instead of array as default
+            Debug.Assert(CarAgents.Count > 0, "No CarAgents found");
+        }
+
+        //Setup the area
+        private void Start()
+        {
+            //Create checkpoints on racepath
+            Debug.Assert(racePath != null, "Racepath not set");
         }
     }
 }
