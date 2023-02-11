@@ -25,5 +25,11 @@ namespace Car //So no naming conflicts
         public List<CarAgent> carAgents { get; private set; } //Anything public can access but can only be set inside of class
 
         public List<GameObject> Checkpoints { get; private set; }
+
+        //Actions to preform when scripts wakens
+        private void Awake()
+        {
+            //Find all aircraft Agents in area.
+        }
     }
 }
