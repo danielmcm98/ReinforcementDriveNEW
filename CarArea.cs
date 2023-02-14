@@ -1,7 +1,6 @@
 using Cinemachine;
 using System.Collections;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
 
@@ -41,6 +40,26 @@ namespace Car //So no naming conflicts
         {
             //Create checkpoints on racepath
             Debug.Assert(racePath != null, "Racepath not set");
+            Checkpoints = new List<GameObject>();
+            int numCheckpoints = (int)racePath.MaxUnit(CinemachinePathBase.Position.PathUnits); //Figures out how many points on racepath
+            for (int i = 0; i < numCheckpoints; i++){
+
+                //Either create a nromal checkpoint, start or finish line
+                GameObject checkpoint;
+                if (i == 0) checkpoint = Instantiate<GameObject>(startLine);
+                else if (i == numCheckpoints - 1) checkpoint = Instantiate<GameObject>(finishLine);
+                else checkpoint = Instantiate<GameObject>(checkpointPrefab);
+
+                //Set the parent, position and rotation
+                checkpointPrefab.trasnform.SetParent(racePath.transform);
+                checkpointPrefab.transform.localPosition = racePath.m_Waypoints[i].position;
+                checkpoint.transform.rotation = racePath.EvaluateOrientationAtUnit(i, CinemachinePathBase.PositionUnits.PathUnits);
+
+                // Add the checkpoint to the list
+                Checkpoints.Add(checkpoint);
+
+            }
+
         }
     }
 }
