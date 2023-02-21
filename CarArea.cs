@@ -29,19 +29,31 @@ namespace Assets //So no naming conflicts
         //Actions to preform when scripts wakens
         private void Awake()
         {
-            //Find all aircraft Agents in area.
-            CarAgents = transform.GetComponentsInChildren<CarAgent>().ToList(); //Returns list instead of array as default
-            Debug.Assert(CarAgents.Count > 0, "No CarAgents found");
+            if (CarAgents == null) FindCarAgents();
         }
+
 
         //Setup the area
         private void Start()
         {
+            if (Checkpoints == null) CreateCheckpoints();
+        }
+
+        private void FindCarAgents()
+        {
+            //Find all car Agents in area.
+            CarAgents = transform.GetComponentsInChildren<CarAgent>().ToList(); //Returns list instead of array as default
+            Debug.Assert(CarAgents.Count > 0, "No CarAgents found");
+        }
+
+        private void CreateCheckpoints()
+        {            
             //Create checkpoints on racepath
             Debug.Assert(racePath != null, "Racepath not set");
             Checkpoints = new List<GameObject>();
             int numCheckpoints = (int)racePath.MaxUnit(CinemachinePathBase.PositionUnits.PathUnits); //Figures out how many points on racepath
-            for (int i = 0; i < numCheckpoints; i++){
+            for (int i = 0; i < numCheckpoints; i++)
+            {
 
                 //Either create a nromal checkpoint, start or finish line
                 GameObject checkpoint;
@@ -56,14 +68,17 @@ namespace Assets //So no naming conflicts
 
                 // Add the checkpoint to the list
                 Checkpoints.Add(checkpoint);
-
             }
-
         }
+        
 
         //Reset the position of agent using its current new checkpoint index unless randomise true
         public void ResetAgentPosition(CarAgent agent, bool randomise = false)
         {
+            if (CarAgents == null) FindCarAgents();
+            if (Checkpoints == null) CreateCheckpoints();
+
+
             if (randomise)
             {
                 //Pick next checkpoint at random
