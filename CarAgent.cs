@@ -2,17 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class CarAgent : MonoBehaviour
-{
-    // Start is called before the first frame update
-    void Start()
+namespace Assets
+{ 
+    public class CarAgent : MonoBehaviour
     {
-        
+        public int NewCheckpointIndex { get; set; }
+
     }
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
 }
