@@ -5,24 +5,23 @@ using Unity.MLAgents.Sensors;
 using UnityEngine;
 
 namespace Assets
-{ 
+{
     public class CarAgent : Agent
     {
-        [SerializeField] private WheelCollider FrontLeftWheelCollider;
-        [SerializeField] private WheelCollider FrontRightWheelCollider;
-        [SerializeField] private WheelCollider RearLeftWheelCollider;
-        [SerializeField] private WheelCollider RearRightWheelCollider;
 
-        [SerializeField] private Transform FrontLeftWheelTransform;
-        [SerializeField] private Transform FrontRightWheelTransform;
-        [SerializeField] private Transform RearLeftWheelTransform;
-        [SerializeField] private Transform RearRightWheelTransform;
-  
-        
-        [Header("Movement Parameters")]
-        public float driveForce = 1000f;
-        public float breakingForce = 5000f;
-        public float steerSpeed = 100f;
+
+        [Header("Car Properties")]
+        [SerializeField] private float motorForce = 1500f;
+        [SerializeField] private float brakeForce = 3000f;
+        [SerializeField] private float maxSteeringAngle = 30f;
+        [SerializeField] private float downForceCoefficient = 10f;
+        [SerializeField] private float steerAssistCoefficient = 0.2f;
+
+        [Header("Wheels")]
+        [SerializeField] private WheelCollider[] driveWheels;
+        [SerializeField] private WheelCollider[] steerWheels;
+        [SerializeField] private WheelCollider[] brakeWheels;
+
 
         [Header("Training")]
         [Tooltip("Number of steps to time out after in training")]
@@ -34,11 +33,17 @@ namespace Assets
         private float nextStepTimeout;
 
         //Components to keep track of 
+        private float horizontalInput;
+        private float verticalInput;
+        private bool isBraking;
         private CarArea area;
         new private Rigidbody rigidbody;
 
         //CHeck if frozen
         private bool frozen = false;
+
+        public bool useHeuristic;
+
 
         //Controls
         private float steerChange = 0f;
@@ -53,6 +58,8 @@ namespace Assets
         {
             area = GetComponentInParent<CarArea>();
             rigidbody = GetComponent<Rigidbody>();
+            rigidbody.centerOfMass = new Vector3(0, -0.7f, 0);
+
 
             //Training and racing steps
             MaxStep = area.trainingMode ? 5000 : 0;
@@ -68,8 +75,50 @@ namespace Assets
 
             //Update steo timeout if training
             if (area.trainingMode) nextStepTimeout = StepCount + stepTimeout;
-        }   
-        
+        }
+
+        public override void Heuristic(in ActionBuffers actionsOut)
+        {
+            if (useHeuristic)
+            {
+                var discreteActions = actionsOut.DiscreteActions;
+
+                // Steering
+                if (Input.GetKey(KeyCode.A))
+                {
+                    discreteActions[0] = 2;
+                }
+                else if (Input.GetKey(KeyCode.D))
+                {
+                    discreteActions[0] = 1;
+                }
+                else
+                {
+                    discreteActions[0] = 0;
+                }
+
+                // Throttle
+                if (Input.GetKey(KeyCode.W))
+                {
+                    discreteActions[1] = 1;
+                }
+                else
+                {
+                    discreteActions[1] = 0;
+                }
+
+                // Brake
+                if (Input.GetKey(KeyCode.Space))
+                {
+                    discreteActions[2] = 1;
+                }
+                else
+                {
+                    discreteActions[2] = 0;
+                }
+            }
+        }
+
 
         public override void OnActionReceived(ActionBuffers actions)
         {
@@ -85,19 +134,19 @@ namespace Assets
             {
                 case 0: driveChange = 0f; break;
                 case 1: driveChange = +1f; break;
-                case 2: driveChange = -1f; break;
             }
-/*            switch (actions.DiscreteActions[2])
+            switch (actions.DiscreteActions[2])
             {
                 case 0: brakeChange = 0f; break;
-                case 1: brakeChange = +1f; AddReward(-0.05f); break;
-            }*/
+                case 1: brakeChange = +1f; break;
+            }
 
-/*            Debug.Log(actions.DiscreteActions[0]);
-            Debug.Log(actions.DiscreteActions[1]);
-            Debug.Log(actions.DiscreteActions[2]);*/
+            /*            Debug.Log(actions.DiscreteActions[0]);
+                        Debug.Log(actions.DiscreteActions[1]);
+                        Debug.Log(actions.DiscreteActions[2]);*/
 
-            MakeMoves();
+            FixedUpdate();
+            //MakeMoves();
 
             if (area.trainingMode)
             {   // Small reward every step
@@ -113,7 +162,7 @@ namespace Assets
                 }
 
                 Vector3 lCheckpointDir = VectorNextCheckpoint();
-                if(lCheckpointDir.magnitude < Academy.Instance.EnvironmentParameters.GetWithDefault("checkpoint_rad", 0f))
+                if (lCheckpointDir.magnitude < Academy.Instance.EnvironmentParameters.GetWithDefault("checkpoint_rad", 0f))
                 {
                     CheckpointRec();
                 }
@@ -168,48 +217,75 @@ namespace Assets
             if (area.trainingMode)
             {
                 Debug.Log("Checkpoint");
-                AddReward(.5f);
+                AddReward(1f);
                 nextStepTimeout = StepCount + stepTimeout; //.5 for each checkpoint then increases timeout
             }
         }
 
-        
-        //Do movement
-        private void MakeMoves()
-        {
-            //Driving forward and back
-            FrontLeftWheelCollider.motorTorque = driveChange * driveForce;
-            FrontRightWheelCollider.motorTorque = driveChange * driveForce;
-            breakingForceNow = brakeChange * breakingForce;
-            UseBreak();
 
-            //Turning
-            steerAngleNow = maxSteerAngle * steerChange;
-            FrontLeftWheelCollider.steerAngle = steerAngleNow;
-            FrontRightWheelCollider.steerAngle = steerAngleNow;
-
-            //Update wheels
-            ChangeOneWheel(FrontLeftWheelCollider, FrontLeftWheelTransform);
-            ChangeOneWheel(FrontRightWheelCollider, FrontRightWheelTransform);
-            ChangeOneWheel(RearRightWheelCollider, RearRightWheelTransform);
-            ChangeOneWheel(RearLeftWheelCollider, RearLeftWheelTransform);
-        }
-        private void ChangeOneWheel(WheelCollider wheelCollider, Transform wheelTransform)
+        private void FixedUpdate()
         {
-            Vector3 position;
-            Quaternion rotation;
-            wheelCollider.GetWorldPose(out position, out rotation);
-            wheelTransform.rotation = rotation;
-            wheelTransform.position = position;
+            if (!frozen)
+            {
+                ApplyMotorTorque();
+                ApplySteering();
+                ApplyBrakes();
+                ApplyDownForce();
+                ApplySteerAssist();
+            }
         }
 
-        private void UseBreak()
+        private void ApplyMotorTorque()
         {
-            FrontRightWheelCollider.brakeTorque = breakingForceNow;
-            FrontLeftWheelCollider.brakeTorque = breakingForceNow;
-            RearLeftWheelCollider.brakeTorque = breakingForceNow;
-            RearRightWheelCollider.brakeTorque = breakingForceNow;
+            float motorTorque = driveChange * motorForce;
+            foreach (var wheel in driveWheels)
+            {
+                wheel.motorTorque = motorTorque;
+            }
+
+            // Apply a small negative reward for braking during training
+            if (area.trainingMode && driveChange < 1f)
+            {
+                AddReward(-0.005f);
+            }
         }
+
+        private void ApplySteering()
+        {
+            float steerAngle = maxSteeringAngle * steerChange;
+            foreach (var wheel in steerWheels)
+            {
+                wheel.steerAngle = steerAngle;
+            }
+        }
+
+        private void ApplyBrakes()
+        {
+            float appliedBrakeForce = brakeChange * brakeForce;
+            foreach (var wheel in brakeWheels)
+            {
+                wheel.brakeTorque = appliedBrakeForce;
+            }
+
+            // Apply a small negative reward for braking during training
+            if (area.trainingMode && brakeChange > 0f)
+            {
+                AddReward(-0.005f);
+            }
+        }
+
+
+        private void ApplyDownForce()
+        {
+            rigidbody.AddForce(-transform.up * rigidbody.velocity.magnitude * downForceCoefficient);
+        }
+
+        private void ApplySteerAssist()
+        {
+            Vector3 localVelocity = transform.InverseTransformDirection(rigidbody.velocity);
+            rigidbody.AddForceAtPosition(transform.right * -localVelocity.x * steerAssistCoefficient, transform.position);
+        }
+
 
         //What happens when hit trigger, other = colider entered
         private void OnTriggerEnter(Collider other)
@@ -219,7 +295,16 @@ namespace Assets
             {
                 CheckpointRec();
             }
-            
+
+            if (other.transform.CompareTag("Walls"))
+            {
+                if (area.trainingMode)
+                {
+                    AddReward(-0.75f);
+                    Debug.Log("Wall Hit");
+                }
+            }
+
         }
 
         private void OnCollisionEnter(Collision collision)
@@ -228,37 +313,24 @@ namespace Assets
             {
                 if (area.trainingMode)
                 {
-               
-                    AddReward(-.25f);
-                    Debug.Log("Crash");
-                }
-              
-            }
-
-            if(collision.gameObject.CompareTag("Walls"))
-            {
-                AddReward(-0.5f);
-            }
-
-            if (collision.transform.CompareTag("Agent"))
-            {
-                if (area.trainingMode)
-                {
 
                     AddReward(-.25f);
                     Debug.Log("Crash");
                 }
 
             }
+
 
             if (collision.transform.CompareTag("OffTrack"))
             {
-                
+
                 if (area.trainingMode)
                 {
-                  //  AddReward(-2f);
-                  //  EndEpisode();
+
                     Debug.Log("Offtrack");
+                    AddReward(-2f);
+                    EndEpisode();
+
                 }
                 else
                 {
@@ -268,13 +340,7 @@ namespace Assets
         }
 
 
-        private void OnCollisionStay(Collision collision)
-        {
-            if (collision.gameObject.CompareTag("Walls"))
-            {
-                AddReward(-0.1f);
-            }
-        }
+
         private IEnumerator FailReset()
         {
             FreezeAgent();
@@ -289,5 +355,4 @@ namespace Assets
 
         }
     }
-
-} 
+}

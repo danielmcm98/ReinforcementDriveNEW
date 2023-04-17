@@ -23,6 +23,10 @@ public class AdvancedCarController : MonoBehaviour
     private void Start()
     {
         carRigidbody = GetComponent<Rigidbody>();
+
+        // Lower the center of mass
+        carRigidbody.centerOfMass = new Vector3(0, -0.7f, 0);
+
     }
 
     private void FixedUpdate()

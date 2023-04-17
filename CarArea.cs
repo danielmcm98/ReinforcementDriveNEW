@@ -14,9 +14,6 @@ namespace Assets //So no naming conflicts
         [Tooltip("The prefab for checkpoints")]
         public GameObject checkpointPrefab;
 
-        [Tooltip("The prefab for start")]
-        public GameObject startLinePrefab;
-
         [Tooltip("The prefab for finish")]
         public GameObject finishLinePrefab;
 
@@ -57,8 +54,7 @@ namespace Assets //So no naming conflicts
 
                 //Either create a nromal checkpoint, start or finish line
                 GameObject checkpoint;
-                if (i == 0) checkpoint = Instantiate<GameObject>(startLinePrefab);
-                else if (i == numCheckpoints - 1) checkpoint = Instantiate<GameObject>(finishLinePrefab);
+                if (i == numCheckpoints - 1) checkpoint = Instantiate<GameObject>(finishLinePrefab);
                 else checkpoint = Instantiate<GameObject>(checkpointPrefab);
 
                 //Set the parent, position and rotation
