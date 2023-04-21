@@ -9,13 +9,12 @@ namespace Assets
     public class CarAgent : Agent
     {
 
-
         [Header("Car Properties")]
-        [SerializeField] private float motorForce = 1500f;
-        [SerializeField] private float brakeForce = 3000f;
-        [SerializeField] private float maxSteeringAngle = 30f;
-        [SerializeField] private float downForceCoefficient = 10f;
-        [SerializeField] private float steerAssistCoefficient = 0.2f;
+        [SerializeField] private float motorForce = 1000f;
+        [SerializeField] private float brakeForce = 2000f;
+        [SerializeField] private float maxSteeringAngle = 35f;
+        [SerializeField] private float downForceCoefficient = 200f;
+        [SerializeField] private float steerAssistCoefficient = 1f;
 
         [Header("Wheels")]
         [SerializeField] private WheelCollider[] driveWheels;
