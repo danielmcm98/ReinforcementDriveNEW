@@ -95,7 +95,7 @@ namespace Assets //So no naming conflicts
 
             // Calculate a horizontal offset so that agents are spread out
             Vector3 posOffset = Vector3.right * (CarAgents.IndexOf(agent) - CarAgents.Count / 2f)
-                * Random.Range(4f, 5f); //Random so it doesnt take same path
+                * Random.Range(5f, 6f); //Random so it doesnt take same path
 
             // Set the car pos and rotation
             agent.transform.position = basePos + orientation * posOffset;
