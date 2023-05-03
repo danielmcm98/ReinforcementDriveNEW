@@ -32,9 +32,6 @@ namespace Assets
         private float nextStepTimeout;
 
         //Components to keep track of 
-        private float horizontalInput;
-        private float verticalInput;
-        private bool isBraking;
         private CarArea area;
         new private Rigidbody rigidbody;
 
@@ -46,11 +43,8 @@ namespace Assets
 
         //Controls
         private float steerChange = 0f;
-        private float steerAngleNow;
-        private float maxSteerAngle = 30f;
         private float driveChange = 0f;
         private float brakeChange = 0f;
-        private float breakingForceNow = 0f;
 
         //Called when agent is first 
         public override void Initialize()
@@ -140,12 +134,8 @@ namespace Assets
                 case 1: brakeChange = +1f; break;
             }
 
-            /*            Debug.Log(actions.DiscreteActions[0]);
-                        Debug.Log(actions.DiscreteActions[1]);
-                        Debug.Log(actions.DiscreteActions[2]);*/
 
             FixedUpdate();
-            //MakeMoves();
 
             if (area.trainingMode)
             {   // Small reward every step
@@ -181,12 +171,12 @@ namespace Assets
             Vector3 nextCheckpointFor = area.Checkpoints[NewCheckpointIndex].transform.forward;
             sensor.AddObservation(transform.InverseTransformDirection(nextCheckpointFor));
 
-            //9 total obs
+            //9 total observations
         }
 
 
-        //Stops agent moving and taking actions
-        public void FreezeAgent()
+            //Stops agent moving and taking actions
+            public void FreezeAgent()
         {
             Debug.Assert(area.trainingMode == false, "Freeze/unfreeze unsuported");
             frozen = true;
@@ -217,7 +207,7 @@ namespace Assets
             {
                 Debug.Log("Checkpoint");
                 AddReward(1f);
-                nextStepTimeout = StepCount + stepTimeout; //.5 for each checkpoint then increases timeout
+                nextStepTimeout = StepCount + stepTimeout; 
             }
         }
 
@@ -242,7 +232,6 @@ namespace Assets
                 wheel.motorTorque = motorTorque;
             }
 
-            // Apply a small negative reward for braking during training
             if (area.trainingMode && driveChange < 1f)
             {
                 AddReward(-0.005f);
@@ -312,24 +301,19 @@ namespace Assets
             {
                 if (area.trainingMode)
                 {
-
                     AddReward(-.25f);
                     Debug.Log("Crash");
                 }
 
             }
 
-
             if (collision.transform.CompareTag("OffTrack"))
             {
-
                 if (area.trainingMode)
                 {
-
                     Debug.Log("Offtrack");
                     AddReward(-2f);
                     EndEpisode();
-
                 }
                 else
                 {

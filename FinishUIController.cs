@@ -7,7 +7,7 @@ namespace Assets
 {
     public class FinishUIController : MonoBehaviour
     {
-        [Tooltip("Text to display finishing position (e.g. 2nd place)")]
+        [Tooltip("Text to display finishing position")]
         public TextMeshProUGUI positionText;
 
         private RaceManager raceMgr;

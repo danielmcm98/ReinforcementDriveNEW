@@ -24,6 +24,7 @@ namespace Assets
         // Populate dropdown lists with information
         private void Start()
         {
+            GameManager.Instance.GameState = GameState.MainMenu;
             Debug.Assert(playableLevels.Count > 0, "No levels available");
             levelSelector.ClearOptions();
             levelSelector.AddOptions(playableLevels);
