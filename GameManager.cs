@@ -78,21 +78,23 @@ namespace Assets
         {
             StartCoroutine(LoadLevelAsync(levelName, newState));
         }
-
         private IEnumerator LoadLevelAsync(string levelName, GameState newState)
         {
-            //Load level
+            // Load level
+            Debug.Log("Loading level: " + levelName); // Add this debug statement
             AsyncOperation operation = SceneManager.LoadSceneAsync(levelName);
             while (operation.isDone == false)
             {
-                 yield return null;
+                yield return null;
             }
+
+            Debug.Log("Level loaded: " + levelName); // Add this debug statement
 
             Screen.SetResolution(Screen.currentResolution.width, Screen.currentResolution.height, true);
 
-            //Update state
+            // Update state
             GameState = newState;
-
         }
+
     }
 }
