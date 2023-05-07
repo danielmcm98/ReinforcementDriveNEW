@@ -14,9 +14,6 @@ namespace Assets //So no naming conflicts
         [Tooltip("The prefab for checkpoints")]
         public GameObject checkpointPrefab;
 
-        [Tooltip("The prefab for start")]
-        public GameObject startLinePrefab;
-
         [Tooltip("The prefab for finish")]
         public GameObject finishLinePrefab;
 
@@ -57,8 +54,7 @@ namespace Assets //So no naming conflicts
 
                 //Either create a nromal checkpoint, start or finish line
                 GameObject checkpoint;
-                if (i == 0) checkpoint = Instantiate<GameObject>(startLinePrefab);
-                else if (i == numCheckpoints - 1) checkpoint = Instantiate<GameObject>(finishLinePrefab);
+                if (i == numCheckpoints - 1) checkpoint = Instantiate<GameObject>(finishLinePrefab);
                 else checkpoint = Instantiate<GameObject>(checkpointPrefab);
 
                 //Set the parent, position and rotation
@@ -99,7 +95,7 @@ namespace Assets //So no naming conflicts
 
             // Calculate a horizontal offset so that agents are spread out
             Vector3 posOffset = Vector3.right * (CarAgents.IndexOf(agent) - CarAgents.Count / 2f)
-                * Random.Range(4f, 5f); //Random so it doesnt take same path
+                * Random.Range(5f, 6f); //Random so it doesnt take same path
 
             // Set the car pos and rotation
             agent.transform.position = basePos + orientation * posOffset;
